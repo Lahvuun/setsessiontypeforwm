@@ -1,3 +1,31 @@
+After some recent digging I found out that this works incorrectly. Don't use it.
+Instead, patch the X server to do it, or use LD_PRELOAD.
+
+Something like this:
+```C
+    msg = dbus_message_new_method_call("org.freedesktop.login1",
+            session, "org.freedesktop.login1.Session", "TakeControl");
+    if (!msg) {
+        LogMessage(X_ERROR, "systemd-logind: out of memory\n");
+        goto cleanup;
+    }
+
+    arg = FALSE; /* Don't forcibly take over over the session */
+    if (!dbus_message_append_args(msg, DBUS_TYPE_BOOLEAN, &arg,
+                                  DBUS_TYPE_INVALID)) {
+        LogMessage(X_ERROR, "systemd-logind: out of memory\n");
+        goto cleanup;
+    }
+
+    reply = dbus_connection_send_with_reply_and_block(connection, msg,
+                                                      DBUS_TIMEOUT_USE_DEFAULT, &error);
+    if (!reply) {
+        LogMessage(X_ERROR, "systemd-logind: TakeControl failed: %s\n",
+                   error.message);
+        goto cleanup;
+    }
+```
+
 # Summary
 Fix logind suspending while not idle if you're running a window manager or
 desktop environment under the X.Org Server.
