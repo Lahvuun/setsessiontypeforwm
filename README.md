@@ -4,14 +4,14 @@ Instead, patch the X server to do it, or use LD_PRELOAD.
 Something like this:
 ```C
     msg = dbus_message_new_method_call("org.freedesktop.login1",
-            session, "org.freedesktop.login1.Session", "TakeControl");
+            session, "org.freedesktop.login1.Session", "SetType");
     if (!msg) {
         LogMessage(X_ERROR, "systemd-logind: out of memory\n");
         goto cleanup;
     }
 
-    arg = FALSE; /* Don't forcibly take over over the session */
-    if (!dbus_message_append_args(msg, DBUS_TYPE_BOOLEAN, &arg,
+    const char *type = "x11";
+    if (!dbus_message_append_args(msg, DBUS_TYPE_STRING, &type,
                                   DBUS_TYPE_INVALID)) {
         LogMessage(X_ERROR, "systemd-logind: out of memory\n");
         goto cleanup;
@@ -20,7 +20,7 @@ Something like this:
     reply = dbus_connection_send_with_reply_and_block(connection, msg,
                                                       DBUS_TIMEOUT_USE_DEFAULT, &error);
     if (!reply) {
-        LogMessage(X_ERROR, "systemd-logind: TakeControl failed: %s\n",
+        LogMessage(X_ERROR, "systemd-logind: SetType failed: %s\n",
                    error.message);
         goto cleanup;
     }
